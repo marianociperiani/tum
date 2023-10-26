@@ -33,6 +33,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import typing as ty
 import termplotlib as tpl
+import sys
 
 class CustomLIF(AbstractLIF):
     """Leaky-Integrate-and-Fire (LIF) neural Process.
@@ -228,21 +229,44 @@ def plot_results(sft, in_data):
     np.savetxt('in_data.txt', in_data, fmt='%10.2f')
     fft = np.fft.fft(in_data)
     np.savetxt('fft.txt', fft,delimiter=',', fmt='%10.2f')
-    fft_abs = np.abs(fft)
-    np.savetxt('fft_abs.txt',fft_abs)
+
+    
+    # Extract the 9th element of each row, corresponding to the last element of the stage
+    last_element = [row[8] for row in fft]
+    
+    # Create and write the extracted elements to a text file
+    with open('last_element.txt', 'w') as file:
+        for idx, element in enumerate(last_element, start=1):
+            file.write(f"{element}\n")
+
+    # Calculate the absolute values of the last element and save
+    fft_absolute_values = [abs(element) for element in last_element]
+    np.savetxt('fft_abs.txt',fft_absolute_values)
     
     fig, ax = plt.subplots(2)
-    ax[0].plot(fft[1:128], color="cornflowerblue")
+    ax[0].plot(fft_absolute_values[1:128], color="cornflowerblue")
     ax[1].plot(sft, color="cornflowerblue")
     ax[0].set_title("FFT")
-    ax[0].set_yticks([])
     ax[1].set_title("Spiking FT")
-    ax[1].set_yticks([])
     ax[0].spines['right'].set_visible(False)
     ax[0].spines['top'].set_visible(False)
     ax[1].spines['right'].set_visible(False)
     ax[1].spines['top'].set_visible(False)
+    
+    # Set y-axis ticks and labels for both subplots
+    yticks1 = ax[0].get_yticks()
+    yticklabels1 = [f'{y:.2f}' for y in yticks1]
+    ax[0].set_yticks(yticks1)
+    ax[0].set_yticklabels(yticklabels1)
+    
+    yticks2 = ax[1].get_yticks()
+    yticklabels2 = [f'{y:.2f}' for y in yticks2]
+    ax[1].set_yticks(yticks2)
+    ax[1].set_yticklabels(yticklabels2)
+    
     plt.tight_layout()
+    
+    # Save the figure as a PDF
     fig.savefig("ft_plot.pdf")
 
 def plot_input_spikes(spike_array):
@@ -269,7 +293,7 @@ def plot_input_spikes(spike_array):
 
 
 def main(N=256, T=20, SFT=True, profile=False):
-    
+    #np.set_printoptions(threshold=sys.maxsize)
     if not SFT:
         bias=20
         sample_data = np.zeros((N, T))
